@@ -37,7 +37,7 @@
 
 <h1>🎯 Marble Target Rush</h1>
 <p>
-Drag your mouse (or finger) to roll the marble.<br>
+Drag your arrow keys (or finger) to roll the marble.<br>
 Reach the green target before time runs out!
 </p>
 
@@ -54,7 +54,7 @@ const ctx = canvas.getContext("2d");
 let running = false;
 let level = 1;
 const TOTAL_LEVELS = 200;
-let timeLeft = 60;
+let timeLeft = 6;
 
 const marble = { x: 80, y: 220, r: 12, vx: 0, vy: 0, speed: 0.35 };
 let target = {};
@@ -87,7 +87,7 @@ function generateLevel() {
   marble.y = rand(60, 390);
   marble.vx = marble.vy = 0;
   marble.speed = 0.35;
-  timeLeft = 60;
+  timeLeft = Math.max(3, 6 - Math.floor(level / 25));
 
   target = {
     x: rand(600, 760),
@@ -213,3 +213,4 @@ loop();
 
 </body>
 </html>
+
