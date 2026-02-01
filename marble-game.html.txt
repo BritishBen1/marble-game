@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Marble Target Game</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    margin: 0;
+    background: #0f1220;
+    color: white;
+    font-family: Arial, sans-serif;
+    text-align: center;
+  }
+  h1 { margin: 10px; }
+  canvas {
+    background: #1c1f3a;
+    border-radius: 12px;
+    display: block;
+    margin: 10px auto;
+    touch-action: none;
+  }
+  #ui {
+    margin: 10px;
+    font-size: 18px;
+  }
+  button {
+    font-size: 18px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<h1>🎯 Marble Target Rush</h1>
+<p>
+Drag your mouse (or finger) to roll the marble.<br>
+Reach the green target before time runs out!
+</p>
+
+<button onclick="startGame()">▶ Start Game</button>
+
+<canvas id="game" width="800" height="450"></canvas>
+
+<div id="ui"></div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let running = false;
+let level = 1;
+const TOTAL_LEVELS = 200;
+let timeLeft = 60;
+
+const marble = { x: 80, y: 220, r: 12, vx: 0, vy: 0, speed: 0.35 };
+let target = {};
+let obstacles = [];
+let powerups = {};
+
+let dragStart = null;
+
+canvas.addEventListener("pointerdown", e => {
+  dragStart = { x: e.offsetX, y: e.offsetY };
+});
+
+canvas.addEventListener("pointerup", e => {
+  if (!dragStart) return;
+  marble.vx += (dragStart.x - e.offsetX) * 0.02;
+  marble.vy += (dragStart.y - e.offsetY) * 0.02;
+  dragStart = null;
+});
+
+const keys = {};
+addEventListener("keydown", e => keys[e.key] = true);
+addEventListener("keyup", e => keys[e.key] = false);
+
+function rand(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+function generateLevel() {
+  marble.x = 80;
+  marble.y = rand(60, 390);
+  marble.vx = marble.vy = 0;
+  marble.speed = 0.35;
+  timeLeft = 60;
+
+  target = {
+    x: rand(600, 760),
+    y: rand(60, 390),
+    r: 16
+  };
+
+  obstacles = [];
+  const count = Math.min(4 + Math.floor(level / 8), 12);
+
+  for (let i = 0; i < count; i++) {
+    obstacles.push({
+      x: rand(180, 650),
+      y: rand(60, 380),
+      w: rand(50, 120),
+      h: rand(20, 50)
+    });
+  }
+
+  powerups = Math.random() < 0.8 ? {
+    x: rand(250, 600),
+    y: rand(80, 360),
+    r: 9,
+    type: Math.random() < 0.5 ? "speed" : "time"
+  } : null;
+}
+
+function update() {
+  if (!running) return;
+
+  if (keys["ArrowUp"] || keys["w"]) marble.vy -= marble.speed;
+  if (keys["ArrowDown"] || keys["s"]) marble.vy += marble.speed;
+  if (keys["ArrowLeft"] || keys["a"]) marble.vx -= marble.speed;
+  if (keys["ArrowRight"] || keys["d"]) marble.vx += marble.speed;
+
+  marble.x += marble.vx;
+  marble.y += marble.vy;
+  marble.vx *= 0.98;
+  marble.vy *= 0.98;
+
+  marble.x = Math.max(marble.r, Math.min(canvas.width - marble.r, marble.x));
+  marble.y = Math.max(marble.r, Math.min(canvas.height - marble.r, marble.y));
+
+  obstacles.forEach(o => {
+    if (
+      marble.x + marble.r > o.x &&
+      marble.x - marble.r < o.x + o.w &&
+      marble.y + marble.r > o.y &&
+      marble.y - marble.r < o.y + o.h
+    ) {
+      marble.vx *= -0.7;
+      marble.vy *= -0.7;
+    }
+  });
+
+  if (powerups) {
+    const d = Math.hypot(marble.x - powerups.x, marble.y - powerups.y);
+    if (d < marble.r + powerups.r) {
+      if (powerups.type === "speed") marble.speed += 0.2;
+      if (powerups.type === "time") timeLeft += 10;
+      powerups = null;
+    }
+  }
+
+  const win = Math.hypot(marble.x - target.x, marble.y - target.y);
+  if (win < marble.r + target.r) {
+    level++;
+    if (level > TOTAL_LEVELS) {
+      alert("🏆 You beat all levels!");
+      level = 1;
+    }
+    generateLevel();
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "cyan";
+  ctx.beginPath();
+  ctx.arc(marble.x, marble.y, marble.r, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "lime";
+  ctx.beginPath();
+  ctx.arc(target.x, target.y, target.r, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#888";
+  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
+
+  if (powerups) {
+    ctx.fillStyle = powerups.type === "speed" ? "orange" : "yellow";
+    ctx.beginPath();
+    ctx.arc(powerups.x, powerups.y, powerups.r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  document.getElementById("ui").innerText =
+    `Level ${level}/${TOTAL_LEVELS} — Time Left: ${Math.ceil(timeLeft)}s`;
+}
+
+setInterval(() => {
+  if (!running) return;
+  timeLeft--;
+  if (timeLeft <= 0) generateLevel();
+}, 1000);
+
+function loop() {
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function startGame() {
+  running = true;
+  level = 1;
+  generateLevel();
+}
+
+loop();
+</script>
+
+</body>
+</html>
