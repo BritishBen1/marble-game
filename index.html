@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
+  <button onclick="toggleMusic()">🔊 Music</button>
+
 <head>
 <meta charset="UTF-8">
 <title>Marble Target Rush</title>
@@ -11,7 +13,10 @@
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
-  }
+  }<audio id="bgMusic" loop>
+  <source src="menu-music.mp3" type="audio/mpeg">
+</audio>
+
   h1 { margin: 10px; }
   canvas {
     background: #1c1f3a;
@@ -225,6 +230,18 @@ function startGame() {
   running = true;
   level = 1;
   generateLevel();
+
+  function toggleMusic() {
+  const music = document.getElementById("bgMusic");
+  music.muted = !music.muted;
+}
+
+
+  const music = document.getElementById("bgMusic");
+  music.volume = 0.3; // adjust volume
+  music.play();
+}
+
 }
 
 function loop() {
@@ -238,6 +255,7 @@ loop();
 
 </body>
 </html>
+
 
 
 
