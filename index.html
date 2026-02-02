@@ -2,20 +2,12 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Marble Target Game</title>
+<title>Marble Target Rush</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <style>
   body {
     margin: 0;
     background: #0f1220;
-    <!--
-<audio id="bgMusic" loop>
-  <source src="menu-music.mp3" type="audio/mpeg">
-</audio>
--->
-
-  
-
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
@@ -33,8 +25,9 @@
     font-size: 18px;
   }
   button {
-    font-size: 18px;
-    padding: 10px 20px;
+    font-size: 16px;
+    padding: 8px 14px;
+    margin: 4px;
     border-radius: 8px;
     border: none;
     cursor: pointer;
@@ -44,32 +37,15 @@
 <body>
 
 <h1>🎯 Marble Target Rush</h1>
-<p>
-Use your arrow keys (or finger) to roll the marble.<br>
-Reach the green target before time runs out!
-</p>
+<p>Drag to roll the marble. Reach the green target.</p>
 
-<button onclick="startGame()">▶ Start Game</button>function startGame() {
-  running = true;
-  level = 1;
-  generateLevel();
-
- function toggleMusic() {
-  const music = document.getElementById("bgMusic");
-  music.muted = !music.muted;
-}
-
-}
-
-  <div style="margin-bottom:10px;">
-  <button onclick="setMode('easy')">🟢 Easy Mode (6s)</button>
-  <button onclick="setMode('normal')">🔴 Normal Mode</button>
-    <button onclick="setMode('practice')">🧠 Practice Mode (No Timer)</button>
-    <button onclick="toggleMusic()">🔊 Music</button>
-
-
+<div>
+  <button onclick="setMode('easy')">🟢 Easy (6s)</button>
+  <button onclick="setMode('normal')">🔴 Normal</button>
+  <button onclick="setMode('practice')">🧠 Practice</button>
 </div>
 
+<button onclick="startGame()">▶ Start Game</button>
 
 <canvas id="game" width="800" height="450"></canvas>
 
@@ -78,28 +54,17 @@ Reach the green target before time runs out!
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
-  function setMode(mode) {
-  gameMode = mode;
-  alert(
-    mode === "easy"
-      ? "Easy Mode selected: 6 seconds per level"
-      : "Normal Mode selected: timer gets harder"
-  );
-}
-
 
 let running = false;
 let level = 1;
 const TOTAL_LEVELS = 200;
 let timeLeft = 6;
-  let gameMode = "easy"; // "easy", "normal", "practice"
-
-
+let gameMode = "easy";
 
 const marble = { x: 80, y: 220, r: 12, vx: 0, vy: 0, speed: 0.35 };
 let target = {};
 let obstacles = [];
-let powerups = {};
+let powerup = null;
 
 let dragStart = null;
 
@@ -122,6 +87,17 @@ function rand(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+function setMode(mode) {
+  gameMode = mode;
+  alert(
+    mode === "practice"
+      ? "Practice Mode: no timer"
+      : mode === "easy"
+      ? "Easy Mode: 6 seconds"
+      : "Normal Mode: timer gets harder"
+  );
+}
+
 function generateLevel() {
   marble.x = 80;
   marble.y = rand(60, 390);
@@ -129,15 +105,12 @@ function generateLevel() {
   marble.speed = 0.35;
 
   if (gameMode === "practice") {
-  timeLeft = Infinity; // no timer
-} else if (gameMode === "easy") {
-  timeLeft = 6;
-} else {
-  timeLeft = Math.max(3, 10 - Math.floor(level / 15));
-}
-
-}
-
+    timeLeft = Infinity;
+  } else if (gameMode === "easy") {
+    timeLeft = 6;
+  } else {
+    timeLeft = Math.max(3, 10 - Math.floor(level / 15));
+  }
 
   target = {
     x: rand(600, 760),
@@ -157,7 +130,7 @@ function generateLevel() {
     });
   }
 
-  powerups = Math.random() < 0.8 ? {
+  powerup = Math.random() < 0.7 ? {
     x: rand(250, 600),
     y: rand(80, 360),
     r: 9,
@@ -193,12 +166,12 @@ function update() {
     }
   });
 
-  if (powerups) {
-    const d = Math.hypot(marble.x - powerups.x, marble.y - powerups.y);
-    if (d < marble.r + powerups.r) {
-      if (powerups.type === "speed") marble.speed += 0.2;
-      if (powerups.type === "time") timeLeft += 10;
-      powerups = null;
+  if (powerup) {
+    const d = Math.hypot(marble.x - powerup.x, marble.y - powerup.y);
+    if (d < marble.r + powerup.r) {
+      if (powerup.type === "speed") marble.speed += 0.2;
+      if (powerup.type === "time" && gameMode !== "practice") timeLeft += 5;
+      powerup = null;
     }
   }
 
@@ -229,18 +202,17 @@ function draw() {
   ctx.fillStyle = "#888";
   obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
 
-  if (powerups) {
-    ctx.fillStyle = powerups.type === "speed" ? "orange" : "yellow";
+  if (powerup) {
+    ctx.fillStyle = powerup.type === "speed" ? "orange" : "yellow";
     ctx.beginPath();
-    ctx.arc(powerups.x, powerups.y, powerups.r, 0, Math.PI * 2);
+    ctx.arc(powerup.x, powerup.y, powerup.r, 0, Math.PI * 2);
     ctx.fill();
   }
 
- document.getElementById("ui").innerText =
-  gameMode === "practice"
-    ? `Mode: PRACTICE | Level ${level}/${TOTAL_LEVELS} — No Timer`
-    : `Mode: ${gameMode.toUpperCase()} | Level ${level}/${TOTAL_LEVELS} — Time: ${Math.ceil(timeLeft)}s`;
-
+  document.getElementById("ui").innerText =
+    gameMode === "practice"
+      ? `Mode: PRACTICE | Level ${level}/${TOTAL_LEVELS}`
+      : `Mode: ${gameMode.toUpperCase()} | Level ${level}/${TOTAL_LEVELS} | Time: ${Math.ceil(timeLeft)}s`;
 }
 
 setInterval(() => {
@@ -249,6 +221,11 @@ setInterval(() => {
   if (timeLeft <= 0) generateLevel();
 }, 1000);
 
+function startGame() {
+  running = true;
+  level = 1;
+  generateLevel();
+}
 
 function loop() {
   update();
@@ -256,17 +233,13 @@ function loop() {
   requestAnimationFrame(loop);
 }
 
-function startGame() {
-  running = true;
-  level = 1;
-  generateLevel();
-}
-
 loop();
 </script>
 
 </body>
 </html>
+
+
 
 
 
