@@ -42,6 +42,11 @@ Reach the green target before time runs out!
 </p>
 
 <button onclick="startGame()">▶ Start Game</button>
+  <div style="margin-bottom:10px;">
+  <button onclick="setMode('easy')">🟢 Easy Mode (6s)</button>
+  <button onclick="setMode('normal')">🔴 Normal Mode</button>
+</div>
+
 
 <canvas id="game" width="800" height="450"></canvas>
 
@@ -50,11 +55,22 @@ Reach the green target before time runs out!
 <script>
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
+  function setMode(mode) {
+  gameMode = mode;
+  alert(
+    mode === "easy"
+      ? "Easy Mode selected: 6 seconds per level"
+      : "Normal Mode selected: timer gets harder"
+  );
+}
+
 
 let running = false;
 let level = 1;
 const TOTAL_LEVELS = 200;
 let timeLeft = 6;
+  let gameMode = "easy"; // "easy" or "normal"
+
 
 const marble = { x: 80, y: 220, r: 12, vx: 0, vy: 0, speed: 0.35 };
 let target = {};
@@ -87,7 +103,13 @@ function generateLevel() {
   marble.y = rand(60, 390);
   marble.vx = marble.vy = 0;
   marble.speed = 0.35;
-  timeLeft = Math.max(3, 6 - Math.floor(level / 25));
+
+  if (gameMode === "easy") {
+  timeLeft = 6;
+} else {
+  timeLeft = Math.max(3, 10 - Math.floor(level / 15));
+}
+
 
   target = {
     x: rand(600, 760),
@@ -213,5 +235,6 @@ loop();
 
 </body>
 </html>
+
 
 
