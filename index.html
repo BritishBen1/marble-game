@@ -1,7 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-  <button onclick="toggleMusic()">🔊 Music</button>
-
 <head>
 <meta charset="UTF-8">
 <title>Marble Target Rush</title>
@@ -47,10 +45,9 @@
   <button onclick="setMode('practice')">🧠 Practice</button>
 </div>
 
-<button onclick="startGame()">▶ Start Game</button>
+<button id="startButton" onclick="startGame()">▶ Start Game</button>
 
 <canvas id="game" width="800" height="450"></canvas>
-
 <div id="ui"></div>
 
 <script>
@@ -69,11 +66,7 @@ let obstacles = [];
 let powerup = null;
 
 let dragStart = null;
-
-canvas.addEventListener("pointerdown", e => {
-  dragStart = { x: e.offsetX, y: e.offsetY };
-});
-
+canvas.addEventListener("pointerdown", e => { dragStart = { x: e.offsetX, y: e.offsetY }; });
 canvas.addEventListener("pointerup", e => {
   if (!dragStart) return;
   marble.vx += (dragStart.x - e.offsetX) * 0.02;
@@ -85,172 +78,98 @@ const keys = {};
 addEventListener("keydown", e => keys[e.key] = true);
 addEventListener("keyup", e => keys[e.key] = false);
 
-function rand(min, max) {
-  return Math.random() * (max - min) + min;
-}
+function rand(min,max){return Math.random()*(max-min)+min;}
 
-function setMode(mode) {
+function setMode(mode){
   gameMode = mode;
-  alert(
-    mode === "practice"
-      ? "Practice Mode: no timer"
-      : mode === "easy"
-      ? "Easy Mode: 6 seconds"
-      : "Normal Mode: timer gets harder"
-  );
+  alert(mode === "practice" ? "Practice Mode: no timer"
+        : mode === "easy" ? "Easy Mode: 6 seconds"
+        : "Normal Mode: timer gets harder");
 }
 
-function generateLevel() {
-  marble.x = 80;
-  marble.y = rand(60, 390);
-  marble.vx = marble.vy = 0;
-  marble.speed = 0.35;
+function generateLevel(){
+  marble.x=80; marble.y=rand(60,390); marble.vx=0; marble.vy=0; marble.speed=0.35;
+  if(gameMode==="practice") timeLeft=Infinity;
+  else if(gameMode==="easy") timeLeft=6;
+  else timeLeft=Math.max(3,10-Math.floor(level/15));
 
-  if (gameMode === "practice") {
-    timeLeft = Infinity;
-  } else if (gameMode === "easy") {
-    timeLeft = 6;
-  } else {
-    timeLeft = Math.max(3, 10 - Math.floor(level / 15));
+  target={x:rand(600,760),y:rand(60,390),r:16};
+  obstacles=[];
+  const count=Math.min(4+Math.floor(level/8),12);
+  for(let i=0;i<count;i++){
+    obstacles.push({x:rand(180,650),y:rand(60,380),w:rand(50,120),h:rand(20,50)});
   }
 
-  target = {
-    x: rand(600, 760),
-    y: rand(60, 390),
-    r: 16
-  };
-
-  obstacles = [];
-  const count = Math.min(4 + Math.floor(level / 8), 12);
-
-  for (let i = 0; i < count; i++) {
-    obstacles.push({
-      x: rand(180, 650),
-      y: rand(60, 380),
-      w: rand(50, 120),
-      h: rand(20, 50)
-    });
-  }
-
-  powerup = Math.random() < 0.7 ? {
-    x: rand(250, 600),
-    y: rand(80, 360),
-    r: 9,
-    type: Math.random() < 0.5 ? "speed" : "time"
-  } : null;
+  powerup=Math.random()<0.7 ? {x:rand(250,600),y:rand(80,360),r:9,type:Math.random()<0.5?"speed":"time"} : null;
 }
 
-function update() {
-  if (!running) return;
+function update(){
+  if(!running) return;
+  if(keys["ArrowUp"]||keys["w"]) marble.vy-=marble.speed;
+  if(keys["ArrowDown"]||keys["s"]) marble.vy+=marble.speed;
+  if(keys["ArrowLeft"]||keys["a"]) marble.vx-=marble.speed;
+  if(keys["ArrowRight"]||keys["d"]) marble.vx+=marble.speed;
 
-  if (keys["ArrowUp"] || keys["w"]) marble.vy -= marble.speed;
-  if (keys["ArrowDown"] || keys["s"]) marble.vy += marble.speed;
-  if (keys["ArrowLeft"] || keys["a"]) marble.vx -= marble.speed;
-  if (keys["ArrowRight"] || keys["d"]) marble.vx += marble.speed;
+  marble.x+=marble.vx; marble.y+=marble.vy;
+  marble.vx*=0.98; marble.vy*=0.98;
 
-  marble.x += marble.vx;
-  marble.y += marble.vy;
-  marble.vx *= 0.98;
-  marble.vy *= 0.98;
+  marble.x=Math.max(marble.r,Math.min(canvas.width-marble.r,marble.x));
+  marble.y=Math.max(marble.r,Math.min(canvas.height-marble.r,marble.y));
 
-  marble.x = Math.max(marble.r, Math.min(canvas.width - marble.r, marble.x));
-  marble.y = Math.max(marble.r, Math.min(canvas.height - marble.r, marble.y));
-
-  obstacles.forEach(o => {
-    if (
-      marble.x + marble.r > o.x &&
-      marble.x - marble.r < o.x + o.w &&
-      marble.y + marble.r > o.y &&
-      marble.y - marble.r < o.y + o.h
-    ) {
-      marble.vx *= -0.7;
-      marble.vy *= -0.7;
+  obstacles.forEach(o=>{
+    if(marble.x+marble.r>o.x && marble.x-marble.r<o.x+o.w &&
+       marble.y+marble.r>o.y && marble.y-marble.r<o.y+o.h){
+      marble.vx*=-0.7; marble.vy*=-0.7;
     }
   });
 
-  if (powerup) {
-    const d = Math.hypot(marble.x - powerup.x, marble.y - powerup.y);
-    if (d < marble.r + powerup.r) {
-      if (powerup.type === "speed") marble.speed += 0.2;
-      if (powerup.type === "time" && gameMode !== "practice") timeLeft += 5;
-      powerup = null;
+  if(powerup){
+    const d=Math.hypot(marble.x-powerup.x,marble.y-powerup.y);
+    if(d<marble.r+powerup.r){
+      if(powerup.type==="speed") marble.speed+=0.2;
+      if(powerup.type==="time" && gameMode!=="practice") timeLeft+=5;
+      powerup=null;
     }
   }
 
-  const win = Math.hypot(marble.x - target.x, marble.y - target.y);
-  if (win < marble.r + target.r) {
+  const win=Math.hypot(marble.x-target.x,marble.y-target.y);
+  if(win<marble.r+target.r){
     level++;
-    if (level > TOTAL_LEVELS) {
-      alert("🏆 You beat all levels!");
-      level = 1;
-    }
+    if(level>TOTAL_LEVELS){alert("🏆 You beat all levels!");level=1;}
     generateLevel();
   }
 }
 
-function draw() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "cyan";
-  ctx.beginPath();
-  ctx.arc(marble.x, marble.y, marble.r, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "lime";
-  ctx.beginPath();
-  ctx.arc(target.x, target.y, target.r, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "#888";
-  obstacles.forEach(o => ctx.fillRect(o.x, o.y, o.w, o.h));
-
-  if (powerup) {
-    ctx.fillStyle = powerup.type === "speed" ? "orange" : "yellow";
-    ctx.beginPath();
-    ctx.arc(powerup.x, powerup.y, powerup.r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  document.getElementById("ui").innerText =
-    gameMode === "practice"
-      ? `Mode: PRACTICE | Level ${level}/${TOTAL_LEVELS}`
-      : `Mode: ${gameMode.toUpperCase()} | Level ${level}/${TOTAL_LEVELS} | Time: ${Math.ceil(timeLeft)}s`;
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle="cyan"; ctx.beginPath(); ctx.arc(marble.x,marble.y,marble.r,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="lime"; ctx.beginPath(); ctx.arc(target.x,target.y,target.r,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle="#888"; obstacles.forEach(o=>ctx.fillRect(o.x,o.y,o.w,o.h));
+  if(powerup){ctx.fillStyle=powerup.type==="speed"?"orange":"yellow";ctx.beginPath();ctx.arc(powerup.x,powerup.y,powerup.r,0,Math.PI*2);ctx.fill();}
+  document.getElementById("ui").innerText=gameMode==="practice"
+    ?`Mode: PRACTICE | Level ${level}/${TOTAL_LEVELS}`
+    :`Mode: ${gameMode.toUpperCase()} | Level ${level}/${TOTAL_LEVELS} | Time: ${Math.ceil(timeLeft)}s`;
 }
 
-setInterval(() => {
-  if (!running || gameMode === "practice") return;
+setInterval(()=>{
+  if(!running || gameMode==="practice") return;
   timeLeft--;
-  if (timeLeft <= 0) generateLevel();
-}, 1000);
+  if(timeLeft<=0) generateLevel();
+},1000);
 
-function startGame() {
-  running = true;
-  level = 1;
+function startGame(){
+  running=true;
+  level=1;
   generateLevel();
-
-  function toggleMusic() {
-  const music = document.getElementById("bgMusic");
-  music.muted = !music.muted;
 }
 
-
-  const music = document.getElementById("bgMusic");
-  music.volume = 0.3; // adjust volume
-
-
-}
-
-function loop() {
-  update();
-  draw();
-  requestAnimationFrame(loop);
-}
-
+function loop(){update();draw();requestAnimationFrame(loop);}
 loop();
 </script>
 
 </body>
 </html>
+
 
 
 
