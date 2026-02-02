@@ -8,9 +8,13 @@
   body {
     margin: 0;
     background: #0f1220;
-    <audio id="bgMusic" loop>
+    <!--
+<audio id="bgMusic" loop>
   <source src="menu-music.mp3" type="audio/mpeg">
 </audio>
+-->
+
+  
 
     color: white;
     font-family: Arial, sans-serif;
@@ -50,9 +54,11 @@ Reach the green target before time runs out!
   level = 1;
   generateLevel();
 
+ function toggleMusic() {
   const music = document.getElementById("bgMusic");
-  music.volume = 0.3;
-  music.play();
+  music.muted = !music.muted;
+}
+
 }
 
   <div style="margin-bottom:10px;">
@@ -261,6 +267,7 @@ loop();
 
 </body>
 </html>
+
 
 
 
