@@ -45,6 +45,8 @@ Reach the green target before time runs out!
   <div style="margin-bottom:10px;">
   <button onclick="setMode('easy')">🟢 Easy Mode (6s)</button>
   <button onclick="setMode('normal')">🔴 Normal Mode</button>
+    <button onclick="setMode('practice')">🧠 Practice Mode (No Timer)</button>
+
 </div>
 
 
@@ -69,7 +71,8 @@ let running = false;
 let level = 1;
 const TOTAL_LEVELS = 200;
 let timeLeft = 6;
-  let gameMode = "easy"; // "easy" or "normal"
+  let gameMode = "easy"; // "easy", "normal", "practice"
+
 
 
 const marble = { x: 80, y: 220, r: 12, vx: 0, vy: 0, speed: 0.35 };
@@ -104,10 +107,14 @@ function generateLevel() {
   marble.vx = marble.vy = 0;
   marble.speed = 0.35;
 
-  if (gameMode === "easy") {
+  if (gameMode === "practice") {
+  timeLeft = Infinity; // no timer
+} else if (gameMode === "easy") {
   timeLeft = 6;
 } else {
   timeLeft = Math.max(3, 10 - Math.floor(level / 15));
+}
+
 }
 
 
@@ -208,15 +215,19 @@ function draw() {
     ctx.fill();
   }
 
-  document.getElementById("ui").innerText =
-    `Level ${level}/${TOTAL_LEVELS} — Time Left: ${Math.ceil(timeLeft)}s`;
+ document.getElementById("ui").innerText =
+  gameMode === "practice"
+    ? `Mode: PRACTICE | Level ${level}/${TOTAL_LEVELS} — No Timer`
+    : `Mode: ${gameMode.toUpperCase()} | Level ${level}/${TOTAL_LEVELS} — Time: ${Math.ceil(timeLeft)}s`;
+
 }
 
 setInterval(() => {
-  if (!running) return;
+  if (!running || gameMode === "practice") return;
   timeLeft--;
   if (timeLeft <= 0) generateLevel();
 }, 1000);
+
 
 function loop() {
   update();
@@ -235,6 +246,7 @@ loop();
 
 </body>
 </html>
+
 
 
 
