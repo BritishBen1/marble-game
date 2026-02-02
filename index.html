@@ -8,6 +8,10 @@
   body {
     margin: 0;
     background: #0f1220;
+    <audio id="bgMusic" loop>
+  <source src="menu-music.mp3" type="audio/mpeg">
+</audio>
+
     color: white;
     font-family: Arial, sans-serif;
     text-align: center;
@@ -41,11 +45,22 @@ Use your arrow keys (or finger) to roll the marble.<br>
 Reach the green target before time runs out!
 </p>
 
-<button onclick="startGame()">▶ Start Game</button>
+<button onclick="startGame()">▶ Start Game</button>function startGame() {
+  running = true;
+  level = 1;
+  generateLevel();
+
+  const music = document.getElementById("bgMusic");
+  music.volume = 0.3;
+  music.play();
+}
+
   <div style="margin-bottom:10px;">
   <button onclick="setMode('easy')">🟢 Easy Mode (6s)</button>
   <button onclick="setMode('normal')">🔴 Normal Mode</button>
     <button onclick="setMode('practice')">🧠 Practice Mode (No Timer)</button>
+    <button onclick="toggleMusic()">🔊 Music</button>
+
 
 </div>
 
@@ -246,6 +261,7 @@ loop();
 
 </body>
 </html>
+
 
 
 
